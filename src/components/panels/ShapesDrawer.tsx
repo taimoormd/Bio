@@ -6,6 +6,8 @@ import {
   Maximize2,
   GitCommit,
   MessageSquare,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 import { useEditorStore } from '../../stores/useEditorStore';
 import { SHAPE_CATALOG, ShapeDefinition } from '../../engines/procedural/shapes';
@@ -14,7 +16,7 @@ interface ShapesDrawerProps {
   onInsertShape: (shapeId: string) => void;
 }
 
-type CategoryTab = 'all' | 'basic' | 'connectors' | 'annotations';
+type CategoryTab = 'all' | 'basic' | 'arrows' | 'symbols' | 'connectors' | 'annotations';
 
 export const ShapesDrawer: React.FC<ShapesDrawerProps> = ({ onInsertShape }) => {
   const { isShapesDrawerOpen, setShapesDrawerOpen } = useEditorStore();
@@ -112,6 +114,28 @@ export const ShapesDrawer: React.FC<ShapesDrawerProps> = ({ onInsertShape }) => 
           Geometric
         </button>
         <button
+          onClick={() => setActiveCategory('arrows')}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium transition-all ${
+            activeCategory === 'arrows'
+              ? 'bg-sky-500 text-white shadow-xs'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <ArrowRight className="w-3 h-3" />
+          Arrows
+        </button>
+        <button
+          onClick={() => setActiveCategory('symbols')}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium transition-all ${
+            activeCategory === 'symbols'
+              ? 'bg-sky-500 text-white shadow-xs'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Sparkles className="w-3 h-3" />
+          Symbols
+        </button>
+        <button
           onClick={() => setActiveCategory('connectors')}
           className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium transition-all ${
             activeCategory === 'connectors'
@@ -192,7 +216,7 @@ const ShapeCard: React.FC<ShapeCardProps> = ({ shape, onSelect }) => {
       className="group relative flex flex-col items-center justify-between p-2 rounded-xl bg-slate-50/70 border border-slate-200/70 hover:bg-sky-50/50 hover:border-sky-300 hover:shadow-sm transition-all text-left cursor-grab active:cursor-grabbing active:scale-95"
     >
       <div className="w-12 h-12 flex items-center justify-center text-sky-600 group-hover:text-sky-700 transition-colors">
-        <ShapePreviewIcon shapeId={shape.id} />
+        <ShapePreviewIcon shape={shape} />
       </div>
       <span className="text-[10px] font-medium text-slate-600 group-hover:text-sky-900 truncate w-full text-center mt-1">
         {shape.name}
@@ -204,12 +228,27 @@ const ShapeCard: React.FC<ShapeCardProps> = ({ shape, onSelect }) => {
 /**
  * Clean SVG preview rendering for each procedural shape definition
  */
-const ShapePreviewIcon: React.FC<{ shapeId: string }> = ({ shapeId }) => {
+const ShapePreviewIcon: React.FC<{ shape: ShapeDefinition }> = ({ shape }) => {
   const stroke = '#0284C7';
   const fill = '#E0F2FE';
   const strokeWidth = 2;
 
-  switch (shapeId) {
+  if (shape.svgPath) {
+    const vb = shape.viewBox || [200, 200];
+    return (
+      <svg viewBox={`0 0 ${vb[0]} ${vb[1]}`} className="w-8 h-8">
+        <path
+          d={shape.svgPath}
+          fill={shape.outlined ? stroke : fill}
+          stroke={shape.outlined ? 'none' : stroke}
+          strokeWidth={shape.outlined ? 0 : Math.max(2, (vb[0] / 40) * 1.5)}
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+    );
+  }
+
+  switch (shape.id) {
     case 'rect':
       return (
         <svg viewBox="0 0 40 40" className="w-9 h-9">

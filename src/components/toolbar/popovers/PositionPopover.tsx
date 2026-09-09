@@ -99,10 +99,10 @@ export const PositionPopover: React.FC<PositionPopoverProps> = ({
           ref={buttonRef}
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`h-7 px-2.5 rounded-lg flex items-center space-x-1.5 border text-xs font-medium transition-all select-none ${
+          className={`h-7 px-2.5 rounded-md flex items-center space-x-1.5 text-xs font-medium transition-colors select-none ${
             isOpen
-              ? 'bg-sky-100 text-sky-900 border-sky-300 shadow-xs'
-              : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100'
+              ? 'bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white'
+              : 'text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800'
           }`}
         >
           <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />

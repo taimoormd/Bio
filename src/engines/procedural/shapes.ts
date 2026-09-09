@@ -10,12 +10,16 @@ import {
   FabricObject,
 } from 'fabric';
 import { createPathwayConnector } from './arrows';
+import { PathShapeLibs, PathListItem, PathPoolItem } from './pathShapeLibs';
 
 export interface ShapeDefinition {
   id: string;
   name: string;
-  category: 'basic' | 'connectors' | 'annotations';
+  category: 'basic' | 'connectors' | 'annotations' | 'arrows' | 'symbols';
   tags: string[];
+  svgPath?: string;
+  viewBox?: [number, number];
+  outlined?: boolean;
   create: (color?: string, strokeColor?: string) => FabricObject;
 }
 
@@ -609,3 +613,45 @@ export const SHAPE_CATALOG: ShapeDefinition[] = [
       ),
   },
 ];
+
+const CATEGORY_MAP: Record<string, { category: ShapeDefinition['category']; prefix: string }> = {
+  '矩形': { category: 'basic', prefix: 'Rectangle' },
+  '常用形状': { category: 'basic', prefix: 'Geometric' },
+  '箭头': { category: 'arrows', prefix: 'Arrow' },
+  '其他形状': { category: 'symbols', prefix: 'Symbol' },
+  '线性': { category: 'symbols', prefix: 'Icon' },
+};
+
+export const YFT_PATH_SHAPES: ShapeDefinition[] = PathShapeLibs.flatMap((lib: PathListItem, libIdx: number) => {
+  const meta = CATEGORY_MAP[lib.type] || { category: 'basic', prefix: 'Shape' };
+  return lib.children.map((item: PathPoolItem, itemIdx: number) => {
+    const id = `yft-${libIdx}-${itemIdx}`;
+    const vb = item.viewBox || [200, 200];
+    return {
+      id,
+      name: `${meta.prefix} ${itemIdx + 1}`,
+      category: meta.category,
+      tags: [meta.prefix.toLowerCase(), 'vector', 'shape', lib.type],
+      svgPath: item.path,
+      viewBox: vb,
+      outlined: item.outlined,
+      create: (fill?: string, stroke?: string) => {
+        const pathObj = new Path(item.path, {
+          ...defaultCommonOptions(fill, stroke),
+          fill: item.outlined ? (stroke || DEFAULT_STROKE) : (fill || DEFAULT_FILL),
+          stroke: item.outlined ? 'transparent' : (stroke || DEFAULT_STROKE),
+          strokeWidth: item.outlined ? 0 : DEFAULT_STROKE_WIDTH,
+          strokeUniform: true,
+        });
+        const targetSize = 100;
+        pathObj.scaleX = targetSize / vb[0];
+        pathObj.scaleY = targetSize / vb[1];
+        return pathObj;
+      },
+    };
+  });
+});
+
+// Combine built-in shapes with 100+ yft-design standard vector primitives
+SHAPE_CATALOG.push(...YFT_PATH_SHAPES);
+

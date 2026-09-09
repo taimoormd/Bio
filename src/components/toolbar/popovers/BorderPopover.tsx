@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Minus, Plus, CornerDownRight, Square } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 import { Tooltip } from '../../ui/Tooltip';
 
 export interface BorderPopoverProps {
@@ -19,11 +19,8 @@ export const BorderPopover: React.FC<BorderPopoverProps> = ({
   stroke,
   strokeWidth,
   strokeDashArray,
-  rx = 0,
-  supportsCornerRadius = false,
   onSetStroke,
   onSetStrokeDashStyle,
-  onSetCornerRadius,
   compact = false,
   align = 'left',
 }) => {
@@ -85,39 +82,44 @@ export const BorderPopover: React.FC<BorderPopoverProps> = ({
 
   return (
     <div className="relative inline-block text-left">
-      <Tooltip content="Border & Corners" shortcut="B">
+      <Tooltip content="Border Style" shortcut="B">
         <button
           ref={buttonRef}
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className={`${
             compact ? 'h-6 px-2 text-[11px]' : 'h-7 px-2.5 text-xs'
-          } rounded-lg flex items-center space-x-1.5 border font-medium transition-all select-none ${
+          } rounded-md flex items-center space-x-1.5 font-medium transition-colors select-none ${
             isOpen
-              ? 'bg-sky-100 text-sky-900 border-sky-300 shadow-xs'
-              : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100'
+              ? 'bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white'
+              : 'text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800'
           }`}
         >
-          {/* Visual icon for border & corner rounding */}
+          {/* Canva-style Stroke Weight & Style Icon */}
           <div className="w-3.5 h-3.5 relative flex items-center justify-center">
             <svg
               viewBox="0 0 16 16"
               fill="none"
               stroke="currentColor"
               className="w-3.5 h-3.5"
-              strokeWidth="1.75"
             >
-              <rect x="2" y="2" width="12" height="12" rx="3" strokeDasharray={strokeWidth === 0 ? '2 2' : undefined} />
+              <line x1="2" y1="4" x2="14" y2="4" strokeWidth="1.5" />
+              <line
+                x1="2"
+                y1="8"
+                x2="14"
+                y2="8"
+                strokeWidth="2.5"
+                strokeDasharray={
+                  activeStyle === 'dashed' ? '3 2' : activeStyle === 'dotted' ? '1 2' : undefined
+                }
+              />
+              <line x1="2" y1="12" x2="14" y2="12" strokeWidth="1.5" />
             </svg>
           </div>
           <span className="font-mono text-[11px] tabular-nums text-slate-600">
             {strokeWidth > 0 ? `${strokeWidth}px` : 'None'}
           </span>
-          {supportsCornerRadius && rx > 0 && (
-            <span className="font-mono text-[10px] text-slate-400 border-l border-slate-300/80 pl-1.5 tabular-nums">
-              r:{rx}
-            </span>
-          )}
         </button>
       </Tooltip>
 
@@ -135,8 +137,11 @@ export const BorderPopover: React.FC<BorderPopoverProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-              <Square className="w-3.5 h-3.5 text-sky-600" />
-              Border & Corners
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" className="w-3.5 h-3.5 text-sky-600">
+                <line x1="2" y1="5" x2="14" y2="5" strokeWidth="2" />
+                <line x1="2" y1="11" x2="14" y2="11" strokeWidth="2" strokeDasharray="3 2" />
+              </svg>
+              Border Style
             </span>
             <span className="text-[10px] font-mono text-slate-400">Stroke styling</span>
           </div>
@@ -239,56 +244,6 @@ export const BorderPopover: React.FC<BorderPopoverProps> = ({
               className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600"
             />
           </div>
-
-          {/* Section 3: Corner Rounding (if shape supports corner radius) */}
-          {supportsCornerRadius && (
-            <div className="space-y-1.5 pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between text-[11px] text-slate-700">
-                <span className="font-medium flex items-center gap-1">
-                  <CornerDownRight className="w-3 h-3 text-slate-400" />
-                  Corner Rounding
-                </span>
-                <div className="flex items-center space-x-1">
-                  <button
-                    type="button"
-                    onClick={() => onSetCornerRadius?.(Math.max(0, rx - 2))}
-                    className="w-5 h-5 rounded flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 active:scale-90 transition-transform"
-                  >
-                    <Minus className="w-3 h-3" />
-                  </button>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={rx}
-                    onChange={(e) =>
-                      onSetCornerRadius?.(
-                        Math.min(100, Math.max(0, Number(e.target.value) || 0))
-                      )
-                    }
-                    className="w-8 text-center bg-slate-50 border border-slate-200 rounded px-0.5 py-0.5 font-mono text-[11px] tabular-nums text-slate-800 focus:outline-hidden focus:border-sky-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onSetCornerRadius?.(Math.min(100, rx + 2))}
-                    className="w-5 h-5 rounded flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 active:scale-90 transition-transform"
-                  >
-                    <Plus className="w-3 h-3" />
-                  </button>
-                  <span className="text-slate-400 text-[10px] pl-0.5 font-mono">px</span>
-                </div>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value={rx}
-                onChange={(e) => onSetCornerRadius?.(Number(e.target.value))}
-                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600"
-              />
-            </div>
-          )}
         </div>
       )}
     </div>

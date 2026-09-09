@@ -23,7 +23,6 @@ import {
   Droplet,
   SlidersHorizontal,
   Sliders,
-  Eye,
   Layers,
   Dna,
   ArrowRight,
@@ -38,6 +37,7 @@ import { Tooltip } from '../ui/Tooltip';
 import { PositionPopover } from './popovers/PositionPopover';
 import { BorderPopover } from './popovers/BorderPopover';
 import { CompactColorPopover } from './popovers/CompactColorPopover';
+import { CornerRoundingPopover } from './popovers/CornerRoundingPopover';
 
 export interface PropertiesInspectorProps {
   // Universal Actions
@@ -306,11 +306,11 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
         selectedObjectProps.type.slice(1);
 
   return (
-    <header className="h-12 w-full bg-white border-b border-slate-200/80 px-4 flex items-center justify-between text-xs text-slate-700 select-none shadow-xs z-10 shrink-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <header className="h-12 w-full bg-white dark:bg-zinc-900 border-b border-slate-200/80 dark:border-zinc-800 px-4 flex items-center justify-between text-xs text-slate-700 dark:text-zinc-200 select-none shadow-xs relative z-30 shrink-0">
       {/* Left side: Selection Type, Styling Controls, Position Popover */}
       <div className="flex items-center space-x-2 shrink-0">
         {/* Type Badge */}
-        <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-sky-50 text-sky-700 border border-sky-200/80">
+        <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
           {typeLabel}
         </span>
 
@@ -677,7 +677,7 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
           <div className="flex items-center space-x-1.5 shrink-0">
             {/* Multi-channel Graphic Colors or Single Fill Swatch Trigger */}
             {selectedObjectProps.colorSlots && selectedObjectProps.colorSlots.length > 0 ? (
-              <div className="flex items-center space-x-1 bg-slate-50 border border-slate-200/90 rounded-lg p-0.5">
+              <div className="flex items-center space-x-1.5">
                 {selectedObjectProps.colorSlots.slice(0, 8).map((slot) => (
                   <CompactColorPopover
                     key={slot.id}
@@ -710,13 +710,11 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
               />
             )}
 
-            {/* Canva-Style Border & Corners Popover */}
+            {/* Canva-Style Border Style & Weight Popover */}
             <BorderPopover
               stroke={selectedObjectProps.stroke || '#0284C7'}
               strokeWidth={selectedObjectProps.strokeWidth || 0}
               strokeDashArray={selectedObjectProps.strokeDashArray}
-              rx={selectedObjectProps.rx || 0}
-              supportsCornerRadius={isRect}
               onSetStroke={(color, width) => props.onSetStroke(color, width)}
               onSetStrokeDashStyle={(style) => {
                 if (style === 'none') {
@@ -725,7 +723,6 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
                   props.onSetStrokeDashStyle(style);
                 }
               }}
-              onSetCornerRadius={(radius) => props.onSetCornerRadius(radius)}
             />
 
             {/* Stroke Color Swatch Trigger (Active when border width > 0) */}
@@ -739,15 +736,23 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
               />
             )}
 
+            {/* Canva-Style Dedicated Corner Rounding Popover */}
+            {isRect && (
+              <CornerRoundingPopover
+                rx={selectedObjectProps.rx || 0}
+                onSetCornerRadius={(radius) => props.onSetCornerRadius(radius)}
+              />
+            )}
+
             {/* Drop Shadow Toggle */}
             <Tooltip content="Toggle Drop Shadow">
               <button
                 type="button"
                 onClick={() => props.onSetDropShadow(!selectedObjectProps.hasShadow)}
-                className={`h-7 px-2.5 rounded-lg text-xs font-medium border transition-all ${
+                className={`h-7 px-2.5 rounded-md text-xs font-medium transition-colors select-none ${
                   selectedObjectProps.hasShadow
-                    ? 'bg-sky-100 text-sky-800 border-sky-300 shadow-xs'
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    ? 'bg-slate-100 dark:bg-zinc-800 text-sky-700 dark:text-sky-300 font-semibold'
+                    : 'text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800'
                 }`}
               >
                 Shadow
@@ -910,9 +915,15 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
       {/* Right side: Opacity, Bio Parameters Toggle, Group, Lock, Undo/Redo */}
       <div className="flex items-center space-x-1.5 shrink-0">
         {/* Opacity Stepper */}
-        <Tooltip content="Object Opacity">
-          <div className="flex items-center space-x-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-0.5 h-7">
-            <Eye className="w-3 h-3 text-slate-400" />
+        <Tooltip content="Transparency / Opacity">
+          <div className="flex items-center space-x-1.5 h-7 px-2 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors select-none">
+            {/* Canva-style checkerboard transparency icon */}
+            <div className="w-3.5 h-3.5 rounded-xs overflow-hidden grid grid-cols-2 grid-rows-2 shrink-0 border border-slate-300 dark:border-zinc-600">
+              <div className="bg-slate-400 dark:bg-zinc-400" />
+              <div className="bg-white dark:bg-zinc-800" />
+              <div className="bg-white dark:bg-zinc-800" />
+              <div className="bg-slate-400 dark:bg-zinc-400" />
+            </div>
             <input
               type="number"
               min="0"
@@ -920,9 +931,9 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
               step="5"
               value={Math.round((selectedObjectProps.opacity ?? 1) * 100)}
               onChange={(e) => props.onSetOpacity(Number(e.target.value) / 100)}
-              className="w-7 bg-transparent text-slate-700 focus:outline-hidden text-right font-mono text-[11px] tabular-nums"
+              className="w-7 bg-transparent text-slate-700 dark:text-zinc-200 focus:outline-hidden text-right font-mono text-[11px] tabular-nums"
             />
-            <span className="text-slate-400 text-[10px]">%</span>
+            <span className="text-slate-400 dark:text-zinc-500 text-[10px] font-mono">%</span>
           </div>
         </Tooltip>
 

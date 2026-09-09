@@ -4,9 +4,6 @@ import {
   Lock,
   Unlock,
   Trash2,
-  Bold,
-  Italic,
-  Underline,
   FolderPlus,
   FolderMinus,
   MoreHorizontal,
@@ -14,10 +11,11 @@ import {
   ArrowDown,
   ChevronsUp,
   ChevronsDown,
+  MessageSquare,
+  Check,
 } from 'lucide-react';
 import type { SelectionBounds } from '../../core/canvas/CanvasEngine';
 import { Tooltip } from '../ui/Tooltip';
-import { CompactColorPopover } from '../toolbar/popovers/CompactColorPopover';
 import { useEditorStore } from '../../stores/useEditorStore';
 
 export interface FloatingActionBarProps {
@@ -30,7 +28,10 @@ export interface FloatingActionBarProps {
   onBringToFront?: () => void;
   onSendToBack?: () => void;
   onDelete: () => void;
-  // Shape/vector actions
+  // Group actions
+  onGroup?: () => void;
+  onUngroup?: () => void;
+  // Backwards compatibility props (formatting moved to Unified Top Ribbon)
   onSetFill?: (color: string) => void;
   onSetStroke?: (color: string, width?: number) => void;
   onSetStrokeDashStyle?: (style: 'solid' | 'dashed' | 'dotted' | 'none') => void;
@@ -40,16 +41,12 @@ export interface FloatingActionBarProps {
   onRecolorSlot?: (slotId: string, newHex: string) => void;
   onHoverSlot?: (slotId: string | null) => void;
   onReplaceColor?: (oldHex: string, newHex: string) => void;
-  // Text actions
   onSetFontSize?: (size: number) => void;
   onToggleBold?: () => void;
   onToggleItalic?: () => void;
   onToggleUnderline?: () => void;
   onSetTextAlign?: (align: 'left' | 'center' | 'right' | 'justify') => void;
   onSetTextBackgroundColor?: (color: string) => void;
-  // Group actions
-  onGroup?: () => void;
-  onUngroup?: () => void;
 }
 
 export const FloatingActionBar: React.FC<FloatingActionBarProps> = ({
@@ -59,45 +56,52 @@ export const FloatingActionBar: React.FC<FloatingActionBarProps> = ({
   onToggleLock,
   onBringForward,
   onSendBackward,
+  onBringToFront,
+  onSendToBack,
   onDelete,
-  onSetFill,
-  onSetStroke,
-  onSetStrokeDashStyle,
-  onSetCornerRadius,
-  onSetDropShadow,
-  onSetOpacity,
-  onRecolorSlot,
-  onHoverSlot,
-  onReplaceColor,
-  onSetFontSize,
-  onToggleBold,
-  onToggleItalic,
-  onToggleUnderline,
-  onSetTextAlign,
-  onSetTextBackgroundColor,
   onGroup,
   onUngroup,
 }) => {
-  const { selectedObjectProps, selectedObjectCount, documentColors } = useEditorStore();
+  const { selectedObjectProps, selectedObjectCount } = useEditorStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isNoteOpen, setIsNoteOpen] = useState(false);
+  const [noteText, setNoteText] = useState('');
+  const [savedNote, setSavedNote] = useState('');
 
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const noteRef = useRef<HTMLDivElement>(null);
+  const noteButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Close menus on outside click or Escape
   useEffect(() => {
-    if (!isMenuOpen) return;
+    if (!isMenuOpen && !isNoteOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
       if (
+        isMenuOpen &&
         menuRef.current &&
         !menuRef.current.contains(target) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(target)
+        menuButtonRef.current &&
+        !menuButtonRef.current.contains(target)
       ) {
         setIsMenuOpen(false);
       }
+      if (
+        isNoteOpen &&
+        noteRef.current &&
+        !noteRef.current.contains(target) &&
+        noteButtonRef.current &&
+        !noteButtonRef.current.contains(target)
+      ) {
+        setIsNoteOpen(false);
+      }
     };
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsMenuOpen(false);
+      if (e.key === 'Escape') {
+        setIsMenuOpen(false);
+        setIsNoteOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleKeyDown);
@@ -105,13 +109,13 @@ export const FloatingActionBar: React.FC<FloatingActionBarProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isMenuOpen]);
+  }, [isMenuOpen, isNoteOpen]);
 
   if (!bounds || bounds.width <= 0 || bounds.height <= 0 || !selectedObjectProps) {
     return null;
   }
 
-  const toolbarHeight = 38;
+  const toolbarHeight = 36;
   const gap = 10;
   const showAbove = bounds.top - toolbarHeight - gap >= 12;
   const top = showAbove
@@ -119,8 +123,6 @@ export const FloatingActionBar: React.FC<FloatingActionBarProps> = ({
     : bounds.top + bounds.height + gap;
   const left = bounds.left + bounds.width / 2;
 
-  const isTextbox = selectedObjectProps.type === 'textbox' || !!selectedObjectProps.text;
-  const isImage = selectedObjectProps.type === 'image' || selectedObjectProps.type === 'FabricImage';
   const isGroup = selectedObjectProps.type === 'group';
 
   return (
@@ -130,15 +132,15 @@ export const FloatingActionBar: React.FC<FloatingActionBarProps> = ({
         left: `${left}px`,
         transform: 'translateX(-50%)',
       }}
-      className="absolute z-30 flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl rounded-xl px-1.5 py-1 space-x-1 select-none pointer-events-auto transition-all duration-100 ease-out animate-floating-pill"
+      className="absolute z-30 flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl rounded-xl px-1 py-1 space-x-1 select-none pointer-events-auto transition-all duration-100 ease-out animate-floating-pill"
     >
-      {/* 1. Multi-selection group buttons */}
+      {/* 1. Group / Ungroup (Contextual for multiple objects or group) */}
       {selectedObjectCount > 1 && onGroup && (
         <Tooltip content="Group Objects" shortcut="Ctrl+G" side="top">
           <button
             type="button"
             onClick={onGroup}
-            className="h-6 px-2 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-xs font-medium flex items-center space-x-1 active:scale-95 transition-all"
+            className="h-7 px-2 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-xs font-medium flex items-center space-x-1 active:scale-95 transition-all"
           >
             <FolderPlus className="w-3.5 h-3.5" />
             <span>Group</span>
@@ -151,7 +153,7 @@ export const FloatingActionBar: React.FC<FloatingActionBarProps> = ({
           <button
             type="button"
             onClick={onUngroup}
-            className="h-6 px-2 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-xs font-medium flex items-center space-x-1 active:scale-95 transition-all"
+            className="h-7 px-2 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-xs font-medium flex items-center space-x-1 active:scale-95 transition-all"
           >
             <FolderMinus className="w-3.5 h-3.5" />
             <span>Ungroup</span>
@@ -159,141 +161,76 @@ export const FloatingActionBar: React.FC<FloatingActionBarProps> = ({
         </Tooltip>
       )}
 
-      {/* 2. Text formatting: Font size stepper, B, I, U, Color */}
-      {isTextbox && (
-        <div className="flex items-center space-x-1">
-          <div className="flex items-center space-x-0.5 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-md p-0.5 h-6">
-            <button
-              type="button"
-              onClick={() => onSetFontSize?.(Math.max(6, (selectedObjectProps.fontSize || 16) - 2))}
-              className="px-1 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white font-bold text-xs"
-            >
-              -
-            </button>
-            <span className="w-6 text-center text-slate-700 dark:text-zinc-200 font-mono text-[11px] tabular-nums">
-              {Math.round(selectedObjectProps.fontSize || 16)}
-            </span>
-            <button
-              type="button"
-              onClick={() => onSetFontSize?.(Math.min(160, (selectedObjectProps.fontSize || 16) + 2))}
-              className="px-1 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white font-bold text-xs"
-            >
-              +
-            </button>
-          </div>
+      {/* 2. Canva Item 1: Annotation Note / Comment (💬) */}
+      <div className="relative">
+        <Tooltip content={savedNote ? `Note: "${savedNote}"` : 'Add Note / Comment'} side="top">
+          <button
+            ref={noteButtonRef}
+            type="button"
+            onClick={() => setIsNoteOpen(!isNoteOpen)}
+            className={`p-1.5 rounded-lg active:scale-95 transition-all ${
+              savedNote
+                ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-200'
+                : isNoteOpen
+                ? 'bg-slate-200 dark:bg-zinc-700 text-slate-900 dark:text-white'
+                : 'text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+          </button>
+        </Tooltip>
 
-          <div className="flex items-center space-x-0.5 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-md p-0.5 h-6">
-            {onToggleBold && (
-              <button
-                type="button"
-                onClick={onToggleBold}
-                className={`p-1 rounded ${
-                  selectedObjectProps.fontWeight === 'bold' ||
-                  (typeof selectedObjectProps.fontWeight === 'number' && selectedObjectProps.fontWeight >= 700)
-                    ? 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200 font-bold'
-                    : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700'
-                }`}
-              >
-                <Bold className="w-3 h-3" />
-              </button>
-            )}
-            {onToggleItalic && (
-              <button
-                type="button"
-                onClick={onToggleItalic}
-                className={`p-1 rounded ${
-                  selectedObjectProps.fontStyle === 'italic'
-                    ? 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200'
-                    : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700'
-                }`}
-              >
-                <Italic className="w-3 h-3" />
-              </button>
-            )}
-            {onToggleUnderline && (
-              <button
-                type="button"
-                onClick={onToggleUnderline}
-                className={`p-1 rounded ${
-                  selectedObjectProps.underline
-                    ? 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200'
-                    : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700'
-                }`}
-              >
-                <Underline className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-
-          {onSetFill && (
-            <CompactColorPopover
-              currentColor={selectedObjectProps.fill || '#000000'}
-              label="Text Color"
-              tooltipText="Text Color"
-              documentColors={documentColors}
-              onSelectColor={(c) => onSetFill(c)}
-              align="center"
-              triggerIcon={<span className="font-bold text-[11px] text-white">A</span>}
-            />
-          )}
-        </div>
-      )}
-
-      {/* 3. Shape / Graphic Color Swatches */}
-      {!isTextbox && !isImage && (
-        <div className="flex items-center space-x-1">
-          {selectedObjectProps.colorSlots && selectedObjectProps.colorSlots.length > 0 ? (
-            <div className="flex items-center space-x-1 bg-slate-100 dark:bg-zinc-800 p-0.5 rounded-lg">
-              {selectedObjectProps.colorSlots.slice(0, 5).map((slot) => (
-                <CompactColorPopover
-                  key={slot.id}
-                  currentColor={slot.color}
-                  slotId={slot.id}
-                  slotLabel={slot.label}
-                  tooltipText={`${slot.label}: ${slot.color}`}
-                  documentColors={documentColors}
-                  onSelectColor={(newColor) => {
-                    if (onRecolorSlot) {
-                      onRecolorSlot(slot.id, newColor);
-                    } else if (onReplaceColor) {
-                      onReplaceColor(slot.color, newColor);
-                    } else if (onSetFill) {
-                      onSetFill(newColor);
-                    }
-                  }}
-                  onHoverSlot={onHoverSlot}
-                  align="center"
-                />
-              ))}
+        {isNoteOpen && (
+          <div
+            ref={noteRef}
+            className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 w-60 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl p-3 select-none animate-popover space-y-2.5"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-1.5">
+              <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5 text-sky-600" />
+                Annotation Note
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">Scientific Note</span>
             </div>
-          ) : onSetFill ? (
-            <CompactColorPopover
-              currentColor={selectedObjectProps.fill || 'transparent'}
-              label="Fill Color"
-              tooltipText="Fill Color"
-              documentColors={documentColors}
-              allowTransparent={true}
-              onSelectColor={(c) => onSetFill(c)}
-              align="center"
+            <textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="Add observation, figure tag or citation..."
+              className="w-full text-xs p-2 rounded-lg bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 resize-none focus:outline-hidden focus:border-sky-500 h-18"
             />
-          ) : null}
-        </div>
-      )}
+            <div className="flex items-center justify-between">
+              {savedNote ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSavedNote('');
+                    setNoteText('');
+                    setIsNoteOpen(false);
+                  }}
+                  className="text-[11px] text-rose-500 hover:text-rose-600 font-medium"
+                >
+                  Clear Note
+                </button>
+              ) : (
+                <div />
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setSavedNote(noteText.trim());
+                  setIsNoteOpen(false);
+                }}
+                className="px-2.5 py-1 rounded-md bg-sky-600 hover:bg-sky-700 text-white text-xs font-medium flex items-center gap-1 active:scale-95 transition-all shadow-xs"
+              >
+                <Check className="w-3 h-3" />
+                <span>Save</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
-      <div className="w-px h-4 bg-slate-200 dark:bg-zinc-700 mx-0.5 shrink-0" />
-
-      {/* 4. Quick Duplicate */}
-      <Tooltip content="Duplicate" shortcut="Ctrl+D" side="top">
-        <button
-          type="button"
-          onClick={onDuplicate}
-          className="p-1.5 text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg active:scale-95 transition-all"
-        >
-          <Copy className="w-3.5 h-3.5" />
-        </button>
-      </Tooltip>
-
-      {/* 5. Quick Lock / Unlock */}
+      {/* 3. Canva Item 2: Quick Lock / Unlock (🔒) */}
       <Tooltip content={isLocked ? 'Unlock Object' : 'Lock Object'} shortcut="Ctrl+L" side="top">
         <button
           type="button"
@@ -308,11 +245,11 @@ export const FloatingActionBar: React.FC<FloatingActionBarProps> = ({
         </button>
       </Tooltip>
 
-      {/* 6. More Actions (··· Menu) */}
+      {/* 4. Canva Item 3: More Actions Menu (···) */}
       <div className="relative">
         <Tooltip content="More Actions" side="top">
           <button
-            ref={buttonRef}
+            ref={menuButtonRef}
             type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className={`p-1.5 rounded-lg active:scale-95 transition-all ${
@@ -421,7 +358,11 @@ export const FloatingActionBar: React.FC<FloatingActionBarProps> = ({
               className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
             >
               <div className="flex items-center space-x-2">
-                {isLocked ? <Unlock className="w-3.5 h-3.5 text-slate-500" /> : <Lock className="w-3.5 h-3.5 text-slate-500" />}
+                {isLocked ? (
+                  <Unlock className="w-3.5 h-3.5 text-slate-500" />
+                ) : (
+                  <Lock className="w-3.5 h-3.5 text-slate-500" />
+                )}
                 <span>{isLocked ? 'Unlock' : 'Lock'}</span>
               </div>
               <span className="text-[10px] font-mono text-slate-400">Ctrl+L</span>
@@ -447,17 +388,6 @@ export const FloatingActionBar: React.FC<FloatingActionBarProps> = ({
           </div>
         )}
       </div>
-
-      {/* 7. Quick Delete */}
-      <Tooltip content="Delete Object" shortcut="Del" side="top">
-        <button
-          type="button"
-          onClick={onDelete}
-          className="p-1.5 text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg active:scale-95 transition-all"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      </Tooltip>
     </div>
   );
 };

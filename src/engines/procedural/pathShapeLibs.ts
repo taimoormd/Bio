@@ -1,3 +1,37 @@
+export enum ShapePathFormulasKeys {
+  ROUND_RECT = 'roundRect',
+  ROUND_RECT_DIAGONAL = 'roundRectDiagonal',
+  ROUND_RECT_SINGLE = 'roundRectSingle',
+  ROUND_RECT_SAMESIDE = 'roundRectSameSide',
+  CUT_RECT_DIAGONAL = 'cutRectDiagonal',
+  CUT_RECT_SINGLE = 'cutRectSingle',
+  CUT_RECT_SAMESIDE = 'cutRectSameSide',
+  MESSAGE = 'message',
+  ROUND_MESSAGE = 'roundMessage',
+  L = 'L',
+  RING_RECT = 'ringRect',
+  PLUS = 'plus',
+  TRIANGLE = 'triangle',
+  PARALLELOGRAM_LEFT = 'parallelogramLeft',
+  PARALLELOGRAM_RIGHT = 'parallelogramRight',
+  TRAPEZOID = 'trapezoid',
+  BULLET = 'bullet',
+  INDICATOR = 'indicator',
+}
+
+export interface PathPoolItem {
+  viewBox: [number, number];
+  path: string;
+  special?: boolean;
+  outlined?: boolean;
+  pathFormula?: ShapePathFormulasKeys;
+}
+
+export interface PathListItem {
+  type: string;
+  children: PathPoolItem[];
+}
+
 export const PathShapeLibs: PathListItem[] = [
   {
     type: '矩形',

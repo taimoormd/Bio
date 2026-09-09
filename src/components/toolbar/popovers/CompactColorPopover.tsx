@@ -153,10 +153,10 @@ export const CompactColorPopover: React.FC<CompactColorPopoverProps> = ({
               onHoverSlot(null);
             }
           }}
-          className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all select-none relative overflow-hidden ${
+          className={`w-7 h-7 rounded-md flex items-center justify-center transition-all select-none relative overflow-hidden shadow-2xs ring-1 ring-inset ring-black/15 dark:ring-white/20 ${
             isOpen
-              ? 'ring-2 ring-sky-500 ring-offset-1 border-sky-400'
-              : 'border-slate-300/90 shadow-2xs hover:scale-105 active:scale-95'
+              ? 'ring-2 ring-sky-500 ring-offset-1 scale-105'
+              : 'hover:scale-105 active:scale-95'
           }`}
           style={{
             backgroundColor: isTransparent ? '#FFFFFF' : currentColor,
