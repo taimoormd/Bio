@@ -73,6 +73,10 @@ export interface CanvasViewportHandle {
   addProceduralShape: (shapeId: string, position?: { x: number; y: number }) => void;
   setArtboardBackgroundColor: (color: string) => void;
   replaceColor: (oldHex: string, newHex: string) => void;
+  recolorSlot: (slotId: string, newHex: string) => void;
+  highlightColorSlot: (slotId: string | null) => void;
+  toggleSuperscript: () => void;
+  toggleSubscript: () => void;
 }
 
 export const CanvasViewport = forwardRef<CanvasViewportHandle>((_, ref) => {
@@ -288,6 +292,10 @@ export const CanvasViewport = forwardRef<CanvasViewportHandle>((_, ref) => {
     addProceduralShape: (shapeId, pos) => engineRef.current?.addProceduralShape(shapeId, pos),
     setArtboardBackgroundColor: (color) => engineRef.current?.setArtboardBackgroundColor(color),
     replaceColor: (oldHex, newHex) => engineRef.current?.replaceColorInSelection(oldHex, newHex),
+    recolorSlot: (slotId, newHex) => engineRef.current?.recolorSlotInSelection(slotId, newHex),
+    highlightColorSlot: (slotId) => engineRef.current?.highlightColorSlot(slotId),
+    toggleSuperscript: () => engineRef.current?.toggleSuperscript(),
+    toggleSubscript: () => engineRef.current?.toggleSubscript(),
   }));
 
   return (
@@ -297,7 +305,7 @@ export const CanvasViewport = forwardRef<CanvasViewportHandle>((_, ref) => {
     >
       <canvas ref={canvasRef} />
 
-      {/* Minimalist Floating Action Bar (Duplicate, Lock, Layer, Delete) */}
+      {/* Canva-Style Floating Action & Editing Bar */}
       <FloatingActionBar
         bounds={selectionBounds}
         isLocked={selectedObjectProps?.isLocked}
@@ -306,6 +314,29 @@ export const CanvasViewport = forwardRef<CanvasViewportHandle>((_, ref) => {
         onBringForward={() => engineRef.current?.bringForward()}
         onSendBackward={() => engineRef.current?.sendBackward()}
         onDelete={() => engineRef.current?.deleteActiveObjects()}
+        onSetFill={(color) => engineRef.current?.setSelectionFill(color)}
+        onSetTextBackgroundColor={(color) => engineRef.current?.setTextBackgroundColor(color)}
+        onRecolorSlot={(slotId, newHex) => engineRef.current?.recolorSlotInSelection(slotId, newHex)}
+        onHoverSlot={(slotId) => engineRef.current?.highlightColorSlot(slotId)}
+        onReplaceColor={(oldHex, newHex) => engineRef.current?.replaceColorInSelection(oldHex, newHex)}
+        onSetStroke={(color, width) => engineRef.current?.setSelectionStroke(color, width)}
+        onSetStrokeDashStyle={(style) => {
+          if (style === 'none') {
+            engineRef.current?.setSelectionStroke(selectedObjectProps?.stroke || '#0284C7', 0);
+          } else {
+            engineRef.current?.setStrokeDashStyle(style);
+          }
+        }}
+        onSetCornerRadius={(radius) => engineRef.current?.setCornerRadius(radius)}
+        onSetDropShadow={(enabled) => engineRef.current?.setDropShadow(enabled)}
+        onSetOpacity={(opacity) => engineRef.current?.setSelectionOpacity(opacity)}
+        onSetFontSize={(size) => engineRef.current?.setFontSize(size)}
+        onToggleBold={() => engineRef.current?.toggleBold()}
+        onToggleItalic={() => engineRef.current?.toggleItalic()}
+        onToggleUnderline={() => engineRef.current?.toggleUnderline()}
+        onSetTextAlign={(align) => engineRef.current?.setTextAlign(align)}
+        onGroup={() => engineRef.current?.groupActiveSelection()}
+        onUngroup={() => engineRef.current?.ungroupActiveObject()}
       />
 
       {/* Consolidated Floating Bottom Pill (Figures + Add + Dimensions + Zoom + Fit) */}

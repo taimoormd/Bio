@@ -37,6 +37,7 @@ import {
 import { Tooltip } from '../ui/Tooltip';
 import { PositionPopover } from './popovers/PositionPopover';
 import { BorderPopover } from './popovers/BorderPopover';
+import { CompactColorPopover } from './popovers/CompactColorPopover';
 
 export interface PropertiesInspectorProps {
   // Universal Actions
@@ -71,6 +72,8 @@ export interface PropertiesInspectorProps {
   onSetCornerRadius: (radius: number) => void;
   onSetDropShadow: (enabled: boolean, options?: any) => void;
   onReplaceColor?: (oldHex: string, newHex: string) => void;
+  onRecolorSlot?: (slotId: string, newHex: string) => void;
+  onHoverSlot?: (slotId: string | null) => void;
 
   // Typography
   onSetFontFamily: (family: string) => void;
@@ -79,6 +82,8 @@ export interface PropertiesInspectorProps {
   onToggleItalic: () => void;
   onToggleUnderline: () => void;
   onToggleStrikethrough: () => void;
+  onToggleSuperscript?: () => void;
+  onToggleSubscript?: () => void;
   onSetTextAlign: (align: 'left' | 'center' | 'right' | 'justify') => void;
   onSetTextBackgroundColor: (color: string) => void;
   onSetLineHeight: (val: number) => void;
@@ -141,7 +146,7 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
     canRedo,
     isPropertiesPanelOpen,
     togglePropertiesPanel,
-    openColorPanel,
+    documentColors,
   } = useEditorStore();
 
   const [isGreekMenuOpen, setIsGreekMenuOpen] = useState(false);
@@ -184,7 +189,7 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
     const currentColor = documentConfig.backgroundColor || '#FFFFFF';
 
     return (
-      <header className="h-11 w-full bg-white border-b border-slate-200/80 px-4 flex items-center justify-between text-xs text-slate-700 select-none shadow-xs z-10 shrink-0">
+      <header className="h-12 w-full bg-white border-b border-slate-200/80 px-4 flex items-center justify-between text-xs text-slate-700 select-none shadow-xs z-10 shrink-0">
         <div className="flex items-center space-x-3">
           {/* Document Dimensions Tag */}
           <div className="flex items-center space-x-2 text-slate-600">
@@ -215,17 +220,14 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
               />
             ))}
             {/* Custom Background Color Picker */}
-            <label
-              title="Custom artboard color"
-              className="relative w-5 h-5 rounded-full border border-slate-300 cursor-pointer overflow-hidden flex items-center justify-center bg-gradient-to-tr from-sky-400 via-rose-300 to-amber-200 hover:scale-105 transition-transform"
-            >
-              <input
-                type="color"
-                value={currentColor}
-                onChange={(e) => props.onSetArtboardBackgroundColor(e.target.value)}
-                className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
-              />
-            </label>
+            <CompactColorPopover
+              currentColor={currentColor}
+              label="Background Color"
+              tooltipText="Custom Background Color"
+              documentColors={documentColors}
+              allowTransparent={false}
+              onSelectColor={(color) => props.onSetArtboardBackgroundColor(color)}
+            />
           </div>
 
           <div className="h-4 w-px bg-slate-200" />
@@ -304,7 +306,7 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
         selectedObjectProps.type.slice(1);
 
   return (
-    <header className="h-11 w-full bg-white border-b border-slate-200/80 px-4 flex items-center justify-between text-xs text-slate-700 select-none shadow-xs z-10 shrink-0 overflow-x-auto">
+    <header className="h-12 w-full bg-white border-b border-slate-200/80 px-4 flex items-center justify-between text-xs text-slate-700 select-none shadow-xs z-10 shrink-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* Left side: Selection Type, Styling Controls, Position Popover */}
       <div className="flex items-center space-x-2 shrink-0">
         {/* Type Badge */}
@@ -437,16 +439,37 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
                   <Strikethrough className="w-3.5 h-3.5" />
                 </button>
               </Tooltip>
+
+              <div className="w-px h-3.5 bg-slate-200 mx-0.5" />
+
+              <Tooltip content="Superscript (x²)">
+                <button
+                  type="button"
+                  onClick={props.onToggleSuperscript}
+                  className="px-1.5 py-0.5 rounded text-[11px] font-mono font-bold text-slate-600 hover:bg-slate-200 active:scale-95 transition-all"
+                >
+                  x²
+                </button>
+              </Tooltip>
+              <Tooltip content="Subscript (x₂)">
+                <button
+                  type="button"
+                  onClick={props.onToggleSubscript}
+                  className="px-1.5 py-0.5 rounded text-[11px] font-mono font-bold text-slate-600 hover:bg-slate-200 active:scale-95 transition-all"
+                >
+                  x₂
+                </button>
+              </Tooltip>
             </div>
 
-            {/* Text Color Swatch Trigger → opens left Color Panel */}
-            <Tooltip content="Text Color">
-              <button
-                type="button"
-                onClick={() => openColorPanel('textColor')}
-                className="w-7 h-7 rounded-lg border border-slate-300/90 shadow-2xs hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
-                style={{ backgroundColor: selectedObjectProps.fill || '#000000' }}
-              >
+            {/* Text Color Swatch */}
+            <CompactColorPopover
+              currentColor={selectedObjectProps.fill || '#000000'}
+              label="Text Color"
+              tooltipText="Text Color"
+              documentColors={documentColors}
+              onSelectColor={(c) => props.onSetFill(c)}
+              triggerIcon={
                 <span
                   className="font-bold text-xs drop-shadow-xs"
                   style={{
@@ -458,32 +481,19 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
                 >
                   A
                 </span>
-              </button>
-            </Tooltip>
+              }
+            />
 
-            {/* Text Highlight Swatch Trigger → opens left Color Panel */}
-            <Tooltip content="Text Highlight">
-              <button
-                type="button"
-                onClick={() => openColorPanel('textHighlight')}
-                className={`w-7 h-7 rounded-lg border shadow-2xs hover:scale-105 active:scale-95 transition-all flex items-center justify-center overflow-hidden relative ${
-                  !selectedObjectProps.textBackgroundColor || selectedObjectProps.textBackgroundColor === 'transparent'
-                    ? 'border-slate-300/90 bg-white'
-                    : 'border-slate-300/90'
-                }`}
-                style={{
-                  backgroundColor:
-                    selectedObjectProps.textBackgroundColor && selectedObjectProps.textBackgroundColor !== 'transparent'
-                      ? selectedObjectProps.textBackgroundColor
-                      : '#FFFFFF',
-                }}
-              >
-                {(!selectedObjectProps.textBackgroundColor || selectedObjectProps.textBackgroundColor === 'transparent') && (
-                  <div className="absolute w-[120%] h-[1.5px] bg-rose-500 rotate-45" />
-                )}
-                <span className="text-[10px] font-semibold text-slate-700 relative z-10">ab</span>
-              </button>
-            </Tooltip>
+            {/* Text Highlight Swatch */}
+            <CompactColorPopover
+              currentColor={selectedObjectProps.textBackgroundColor || 'transparent'}
+              label="Text Highlight"
+              tooltipText="Text Highlight"
+              documentColors={documentColors}
+              allowTransparent={true}
+              onSelectColor={(c) => props.onSetTextBackgroundColor(c)}
+              triggerIcon={<span className="text-[10px] font-semibold text-slate-700">ab</span>}
+            />
 
             {/* Text Alignment */}
             <div className="flex items-center space-x-0.5 bg-slate-50 border border-slate-200 rounded-md p-0.5 h-7">
@@ -665,28 +675,40 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
         {/* ------------------ SHAPE / VECTOR FORMATTING BAR ------------------ */}
         {!isTextbox && !isImage && (
           <div className="flex items-center space-x-1.5 shrink-0">
-            {/* Fill Color Swatch Trigger → opens left Color Panel */}
-            <Tooltip content="Fill Color">
-              <button
-                type="button"
-                onClick={() => openColorPanel('fill')}
-                className={`w-7 h-7 rounded-lg border shadow-2xs hover:scale-105 active:scale-95 transition-all flex items-center justify-center overflow-hidden relative ${
-                  !selectedObjectProps.fill || selectedObjectProps.fill === 'transparent'
-                    ? 'border-slate-300/90 bg-white'
-                    : 'border-slate-300/90'
-                }`}
-                style={{
-                  backgroundColor:
-                    selectedObjectProps.fill && selectedObjectProps.fill !== 'transparent'
-                      ? selectedObjectProps.fill
-                      : '#FFFFFF',
-                }}
-              >
-                {(!selectedObjectProps.fill || selectedObjectProps.fill === 'transparent') && (
-                  <div className="absolute w-[120%] h-[1.5px] bg-rose-500 rotate-45" />
-                )}
-              </button>
-            </Tooltip>
+            {/* Multi-channel Graphic Colors or Single Fill Swatch Trigger */}
+            {selectedObjectProps.colorSlots && selectedObjectProps.colorSlots.length > 0 ? (
+              <div className="flex items-center space-x-1 bg-slate-50 border border-slate-200/90 rounded-lg p-0.5">
+                {selectedObjectProps.colorSlots.slice(0, 8).map((slot) => (
+                  <CompactColorPopover
+                    key={slot.id}
+                    currentColor={slot.color}
+                    slotId={slot.id}
+                    slotLabel={slot.label}
+                    tooltipText={`${slot.label}: ${slot.color}`}
+                    documentColors={documentColors}
+                    onSelectColor={(newColor) => {
+                      if (props.onRecolorSlot) {
+                        props.onRecolorSlot(slot.id, newColor);
+                      } else if (props.onReplaceColor) {
+                        props.onReplaceColor(slot.color, newColor);
+                      } else {
+                        props.onSetFill(newColor);
+                      }
+                    }}
+                    onHoverSlot={props.onHoverSlot}
+                  />
+                ))}
+              </div>
+            ) : (
+              <CompactColorPopover
+                currentColor={selectedObjectProps.fill || 'transparent'}
+                label="Fill Color"
+                tooltipText="Fill Color"
+                documentColors={documentColors}
+                allowTransparent={true}
+                onSelectColor={(c) => props.onSetFill(c)}
+              />
+            )}
 
             {/* Canva-Style Border & Corners Popover */}
             <BorderPopover
@@ -708,14 +730,13 @@ export const PropertiesInspector: React.FC<PropertiesInspectorProps> = (props) =
 
             {/* Stroke Color Swatch Trigger (Active when border width > 0) */}
             {(selectedObjectProps.strokeWidth || 0) > 0 && (
-              <Tooltip content="Border Color">
-                <button
-                  type="button"
-                  onClick={() => openColorPanel('stroke')}
-                  className="w-7 h-7 rounded-lg border border-slate-300/90 shadow-2xs hover:scale-105 active:scale-95 transition-all"
-                  style={{ backgroundColor: selectedObjectProps.stroke || '#0284C7' }}
-                />
-              </Tooltip>
+              <CompactColorPopover
+                currentColor={selectedObjectProps.stroke || '#0284C7'}
+                label="Border Color"
+                tooltipText="Border Color"
+                documentColors={documentColors}
+                onSelectColor={(c) => props.onSetStroke(c, selectedObjectProps.strokeWidth)}
+              />
             )}
 
             {/* Drop Shadow Toggle */}

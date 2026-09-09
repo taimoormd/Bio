@@ -7,6 +7,7 @@ import {
   MarginsMm,
   DocumentPage,
 } from '../core/document/types';
+import type { ColorSlot } from '../core/canvas/colorSlots';
 
 export type ToolType = 'select' | 'pan' | 'text' | 'rect' | 'circle';
 
@@ -59,6 +60,7 @@ export interface SelectedObjectProps {
   shadowOffsetX?: number;
   shadowOffsetY?: number;
   extractedColors?: string[];
+  colorSlots?: ColorSlot[];
 
   // Image Filters
   brightness?: number;
@@ -69,7 +71,7 @@ export interface SelectedObjectProps {
   invert?: boolean;
 }
 
-export type ColorPanelTarget = 'fill' | 'stroke' | 'textColor' | 'textHighlight' | null;
+export type ColorPanelTarget = 'fill' | 'stroke' | 'textColor' | 'textHighlight' | 'background' | null;
 
 export interface EditorState {
   documentConfig: DocumentConfig;
@@ -92,6 +94,7 @@ export interface EditorState {
   isPropertiesPanelOpen: boolean;
   isColorPanelOpen: boolean;
   colorPanelTarget: ColorPanelTarget;
+  colorPanelInitialColor: string | null;
   documentColors: string[];
 
   // Actions
@@ -114,7 +117,7 @@ export interface EditorState {
   setUploadsDrawerOpen: (open: boolean) => void;
   togglePropertiesPanel: () => void;
   setPropertiesPanelOpen: (open: boolean) => void;
-  openColorPanel: (target: ColorPanelTarget) => void;
+  openColorPanel: (target: ColorPanelTarget, initialColor?: string | null) => void;
   closeColorPanel: () => void;
   setDocumentColors: (colors: string[]) => void;
   openVectorizer: (imageSource?: { dataUrl: string; name?: string }) => void;
@@ -143,6 +146,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   isPropertiesPanelOpen: false,
   isColorPanelOpen: false,
   colorPanelTarget: null,
+  colorPanelInitialColor: null,
   documentColors: [],
   vectorizerInputImage: null,
   selectedObjectProps: null,
@@ -299,17 +303,18 @@ export const useEditorStore = create<EditorState>((set) => ({
   setPropertiesPanelOpen: (isPropertiesPanelOpen) =>
     set({ isPropertiesPanelOpen }),
 
-  openColorPanel: (target) =>
+  openColorPanel: (target, initialColor = null) =>
     set({
       isColorPanelOpen: true,
       colorPanelTarget: target,
+      colorPanelInitialColor: initialColor,
       isShapesDrawerOpen: false,
       isAssetDrawerOpen: false,
       isUploadsDrawerOpen: false,
     }),
 
   closeColorPanel: () =>
-    set({ isColorPanelOpen: false, colorPanelTarget: null }),
+    set({ isColorPanelOpen: false, colorPanelTarget: null, colorPanelInitialColor: null }),
 
   setDocumentColors: (documentColors) => set({ documentColors }),
 

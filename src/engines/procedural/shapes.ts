@@ -27,6 +27,7 @@ const defaultCommonOptions = (fill = DEFAULT_FILL, stroke = DEFAULT_STROKE) => (
   fill,
   stroke,
   strokeWidth: DEFAULT_STROKE_WIDTH,
+  strokeUniform: true,
   cornerColor: '#0284C7',
   cornerStyle: 'circle' as const,
   borderColor: '#0284C7',
@@ -252,6 +253,19 @@ export const SHAPE_CATALOG: ShapeDefinition[] = [
       new Polygon(getRegularPolygonPoints(8, 50), {
         ...defaultCommonOptions(fill, stroke),
       }),
+  },
+  {
+    id: 'cylinder',
+    name: 'Cylinder / Beaker',
+    category: 'basic',
+    tags: ['tube', 'column', 'container', 'beaker', 'vessel', 'cylinder'],
+    create: (fill, stroke) =>
+      new Path(
+        'M 0 20 C 0 8 22 0 50 0 C 78 0 100 8 100 20 L 100 80 C 100 92 78 100 50 100 C 22 100 0 92 0 80 Z M 0 20 C 0 32 22 40 50 40 C 78 40 100 32 100 20',
+        {
+          ...defaultCommonOptions(fill, stroke),
+        }
+      ),
   },
   {
     id: 'star-4',

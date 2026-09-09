@@ -8,7 +8,6 @@ import { PropertiesPanel } from './components/panels/PropertiesPanel';
 import { CitationModal } from './components/panels/CitationModal';
 import { PropertiesInspector } from './components/toolbar/PropertiesInspector';
 import { ShapesDrawer } from './components/panels/ShapesDrawer';
-import { ColorSidePanel } from './components/panels/ColorSidePanel';
 import {
   CanvasViewport,
   CanvasViewportHandle,
@@ -112,6 +111,8 @@ export const App: React.FC = () => {
         onToggleItalic={() => viewportRef.current?.toggleItalic()}
         onToggleUnderline={() => viewportRef.current?.toggleUnderline()}
         onToggleStrikethrough={() => viewportRef.current?.toggleStrikethrough()}
+        onToggleSuperscript={() => viewportRef.current?.toggleSuperscript()}
+        onToggleSubscript={() => viewportRef.current?.toggleSubscript()}
         onSetTextAlign={(align) => viewportRef.current?.setTextAlign(align)}
         onSetTextBackgroundColor={(color) => viewportRef.current?.setTextBackgroundColor(color)}
         onSetLineHeight={(val) => viewportRef.current?.setLineHeight(val)}
@@ -125,6 +126,12 @@ export const App: React.FC = () => {
         }}
         onReplaceColor={(oldHex, newHex) =>
           viewportRef.current?.replaceColor(oldHex, newHex)
+        }
+        onRecolorSlot={(slotId, newHex) =>
+          viewportRef.current?.recolorSlot(slotId, newHex)
+        }
+        onHoverSlot={(slotId) =>
+          viewportRef.current?.highlightColorSlot(slotId)
         }
       />
 
@@ -158,29 +165,6 @@ export const App: React.FC = () => {
           }
           onInsertVector={(vector) =>
             viewportRef.current?.addSvgFromString(vector.svgString)
-          }
-        />
-
-        {/* Canva-Style Left Color Sidebar Panel */}
-        <ColorSidePanel
-          onSelectColor={(target, color) => {
-            switch (target) {
-              case 'fill':
-                viewportRef.current?.setSelectionFill(color);
-                break;
-              case 'stroke':
-                viewportRef.current?.setSelectionStroke(color, undefined);
-                break;
-              case 'textColor':
-                viewportRef.current?.setSelectionFill(color);
-                break;
-              case 'textHighlight':
-                viewportRef.current?.setTextBackgroundColor(color);
-                break;
-            }
-          }}
-          onReplaceColor={(oldHex, newHex) =>
-            viewportRef.current?.replaceColor(oldHex, newHex)
           }
         />
 

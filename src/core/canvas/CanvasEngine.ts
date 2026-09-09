@@ -28,6 +28,7 @@ import { createDnaGroup, type DnaParams } from '../../engines/procedural/dna';
 import { createPathwayConnector } from '../../engines/procedural/arrows';
 import { SHAPE_CATALOG } from '../../engines/procedural/shapes';
 import { extractSvgPalette, replaceColorInObject, extractDocumentColors } from './colorUtils';
+import { extractColorSlots, recolorSlotInObject, type ColorSlot } from './colorSlots';
 
 export interface SelectionBounds {
   left: number;
@@ -67,6 +68,9 @@ export class CanvasEngine {
   // Clipboard
   private clipboard: FabricObject | null = null;
 
+  // Visual slot hover-highlight overlay
+  private highlightOverlay: FabricObject | null = null;
+
   constructor(
     canvasElement: HTMLCanvasElement,
     containerElement: HTMLElement,
@@ -77,6 +81,9 @@ export class CanvasEngine {
     this.docConfig = docConfig;
     this.options = options;
 
+    // Apply strokeUniform globally across all objects to preserve line weights on scaling
+    FabricObject.ownDefaults.strokeUniform = true;
+
     // Initialize Fabric Canvas with transparent background (rendered dynamically in before:render)
     this.canvas = new Canvas(canvasElement, {
       backgroundColor: '',
@@ -84,6 +91,9 @@ export class CanvasEngine {
       preserveObjectStacking: true,
       stopContextMenu: true,
       fireRightClick: true,
+      selectionColor: 'rgba(2, 132, 199, 0.12)',
+      selectionBorderColor: '#0284C7',
+      selectionLineWidth: 1.5,
     });
 
     this.setupRenderHooks();
@@ -469,6 +479,15 @@ export class CanvasEngine {
       }
 
       if (e.key === 'Escape') {
+        const active = this.canvas.getActiveObject();
+        if (active && (active as any).group) {
+          const parentGroup = (active as any).group;
+          this.canvas.setActiveObject(parentGroup);
+          this.canvas.requestRenderAll();
+          this.updateSelectedProperties();
+          this.updateSelectionBounds();
+          return;
+        }
         this.setTool('select');
         this.canvas.discardActiveObject();
         this.canvas.requestRenderAll();
@@ -523,6 +542,19 @@ export class CanvasEngine {
       this.options.onSelectionChange?.(0);
       this.options.onPropertiesChange?.(null);
       this.options.onSelectionBoundsChange?.(null);
+    });
+
+    // Double-click to enter direct sub-selection mode on compound vectors / groups
+    this.canvas.on('mouse:dblclick', (e: any) => {
+      if (e.subTargets && e.subTargets.length > 0) {
+        const subTarget = e.subTargets[e.subTargets.length - 1];
+        if (subTarget && subTarget !== this.canvas.getActiveObject()) {
+          this.canvas.setActiveObject(subTarget);
+          this.canvas.requestRenderAll();
+          this.updateSelectedProperties();
+          this.updateSelectionBounds();
+        }
+      }
     });
 
     this.canvas.on('object:moving', () => {
@@ -617,6 +649,7 @@ export class CanvasEngine {
     const isLocked = !!(active as any).isLocked || (active.lockMovementX && active.lockMovementY);
     const shadow = active.shadow as Shadow | null;
     const extractedColors = extractSvgPalette(active);
+    const colorSlots = extractColorSlots(active);
 
     const props: SelectedObjectProps = {
       type: active.type || 'object',
@@ -630,6 +663,7 @@ export class CanvasEngine {
       dnaParams: (active as any).dnaParams,
       arrowParams: (active as any).arrowParams,
       extractedColors: extractedColors.length > 0 ? extractedColors : undefined,
+      colorSlots: colorSlots.length > 0 ? colorSlots : undefined,
 
       // Geometry & Positioning
       left: Math.round(active.left || 0),
@@ -1010,6 +1044,7 @@ export class CanvasEngine {
         cornerStyle: 'circle',
         borderColor: '#0284C7',
         transparentCorners: false,
+        subTargetCheck: true,
       });
 
       // Preserve scientific provenance & licensing metadata
@@ -1072,6 +1107,7 @@ export class CanvasEngine {
         cornerStyle: 'circle',
         borderColor: '#0284C7',
         transparentCorners: false,
+        subTargetCheck: true,
       });
 
       if (meta) {
@@ -1157,6 +1193,91 @@ export class CanvasEngine {
     }
   }
 
+  public recolorSlotInSelection(slotId: string, newHex: string): void {
+    const active = this.canvas.getActiveObject();
+    if (!active) return;
+    const changed = recolorSlotInObject(active, slotId, newHex);
+    if (changed) {
+      this.canvas.requestRenderAll();
+      this.saveHistory();
+      this.updateSelectedProperties();
+      this.updateSelectionBounds();
+    }
+  }
+
+  public highlightColorSlot(slotId: string | null): void {
+    if (!this.canvas) return;
+    if (this.highlightOverlay) {
+      this.canvas.remove(this.highlightOverlay);
+      this.highlightOverlay = null;
+    }
+    if (!slotId) {
+      this.canvas.requestRenderAll();
+      return;
+    }
+
+    const active = this.canvas.getActiveObject();
+    if (!active || !(active instanceof Group)) return;
+
+    const slots: ColorSlot[] = (active as any)._colorSlots || [];
+    const targetSlot = slots.find((s) => s.id === slotId);
+    if (!targetSlot || targetSlot.pathIndices.length === 0) return;
+
+    const objects = active.getObjects();
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    const groupMatrix = active.calcTransformMatrix();
+
+    for (const idx of targetSlot.pathIndices) {
+      const child = objects[idx];
+      if (!child) continue;
+      const childMatrix = child.calcTransformMatrix();
+      const halfW = (child.width || 0) / 2;
+      const halfH = (child.height || 0) / 2;
+      const childPoints = [
+        new Point(-halfW, -halfH),
+        new Point(halfW, -halfH),
+        new Point(halfW, halfH),
+        new Point(-halfW, halfH),
+      ];
+
+      for (const pt of childPoints) {
+        const ptCanvas = util.transformPoint(
+          util.transformPoint(pt, childMatrix),
+          groupMatrix
+        );
+        minX = Math.min(minX, ptCanvas.x);
+        minY = Math.min(minY, ptCanvas.y);
+        maxX = Math.max(maxX, ptCanvas.x);
+        maxY = Math.max(maxY, ptCanvas.y);
+      }
+    }
+
+    if (minX !== Infinity && maxX !== -Infinity) {
+      const padding = 4;
+      this.highlightOverlay = new Rect({
+        left: minX - padding,
+        top: minY - padding,
+        width: Math.max(maxX - minX + padding * 2, 4),
+        height: Math.max(maxY - minY + padding * 2, 4),
+        fill: 'transparent',
+        stroke: '#0284C7',
+        strokeWidth: 2,
+        strokeDashArray: [4, 3],
+        rx: 4,
+        ry: 4,
+        selectable: false,
+        evented: false,
+        excludeFromExport: true,
+      });
+      this.canvas.add(this.highlightOverlay);
+      this.canvas.requestRenderAll();
+    }
+  }
+
   public setSelectionFill(color: string): void {
     const active = this.canvas.getActiveObject();
     if (!active) return;
@@ -1199,19 +1320,6 @@ export class CanvasEngine {
     const active = this.canvas.getActiveObject();
     if (!active) return;
     active.set('opacity', Math.min(Math.max(0, opacity), 1));
-    this.canvas.requestRenderAll();
-    this.updateSelectedProperties();
-  }
-
-  public deleteActiveObjects(): void {
-    const activeObjects = this.canvas.getActiveObjects();
-    if (!activeObjects || activeObjects.length === 0) return;
-
-    const isEditingText = activeObjects.some((obj: any) => obj.isEditing);
-    if (isEditingText) return;
-
-    this.canvas.remove(...activeObjects);
-    this.canvas.discardActiveObject();
     this.canvas.requestRenderAll();
     this.updateSelectedProperties();
   }
@@ -1311,74 +1419,6 @@ export class CanvasEngine {
       this.canvas.requestRenderAll();
       this.updateSelectedProperties();
       this.updateSelectionBounds();
-    }
-  }
-
-  public async duplicateActiveObjects(): Promise<FabricObject | null> {
-    const active = this.canvas.getActiveObject();
-    if (!active) return null;
-
-    const cloned = await active.clone([
-      'scientificMeta',
-      'bioType',
-      'membraneParams',
-      'dnaParams',
-      'arrowParams',
-    ]);
-
-    const offsetPx = mmToPx(10);
-    cloned.set({
-      left: (cloned.left || 0) + offsetPx,
-      top: (cloned.top || 0) + offsetPx,
-      evented: true,
-    });
-
-    if (cloned.type === 'activeSelection' || (cloned as any)._objects) {
-      (cloned as any).canvas = this.canvas;
-      (cloned as any).forEachObject((obj: FabricObject) => {
-        this.canvas.add(obj);
-      });
-      cloned.setCoords();
-    } else {
-      this.canvas.add(cloned);
-    }
-
-    this.canvas.setActiveObject(cloned);
-    this.canvas.requestRenderAll();
-    this.updateSelectedProperties();
-    this.updateSelectionBounds();
-    return cloned;
-  }
-
-  public bringForward(): void {
-    const active = this.canvas.getActiveObject();
-    if (active) {
-      this.canvas.bringObjectForward(active);
-      this.canvas.requestRenderAll();
-    }
-  }
-
-  public sendBackward(): void {
-    const active = this.canvas.getActiveObject();
-    if (active) {
-      this.canvas.sendObjectBackwards(active);
-      this.canvas.requestRenderAll();
-    }
-  }
-
-  public bringToFront(): void {
-    const active = this.canvas.getActiveObject();
-    if (active) {
-      this.canvas.bringObjectToFront(active);
-      this.canvas.requestRenderAll();
-    }
-  }
-
-  public sendToBack(): void {
-    const active = this.canvas.getActiveObject();
-    if (active) {
-      this.canvas.sendObjectToBack(active);
-      this.canvas.requestRenderAll();
     }
   }
 
@@ -1516,6 +1556,93 @@ export class CanvasEngine {
     this.updateSelectionBounds();
   }
 
+  public deleteActiveObjects(): void {
+    const active = this.canvas.getActiveObject();
+    if (!active) return;
+    if (active instanceof ActiveSelection) {
+      const objects = active.getObjects();
+      this.canvas.discardActiveObject();
+      this.canvas.remove(...objects);
+    } else {
+      this.canvas.remove(active);
+      this.canvas.discardActiveObject();
+    }
+    this.canvas.requestRenderAll();
+    this.saveHistory();
+    this.updateSelectedProperties();
+    this.updateSelectionBounds();
+  }
+
+  public async duplicateActiveObjects(): Promise<FabricObject | null> {
+    const active = this.canvas.getActiveObject();
+    if (!active) return null;
+
+    const cloned = await active.clone([
+      'scientificMeta',
+      'bioType',
+      'membraneParams',
+      'dnaParams',
+      'arrowParams',
+      'strokeUniform',
+      '_colorSlots',
+    ]);
+    const offsetPx = mmToPx(5);
+    cloned.set({
+      left: (cloned.left || 0) + offsetPx,
+      top: (cloned.top || 0) + offsetPx,
+      evented: true,
+    });
+
+    if (cloned instanceof ActiveSelection || (cloned as any)._objects) {
+      (cloned as any).canvas = this.canvas;
+      (cloned as any).forEachObject((obj: FabricObject) => {
+        this.canvas.add(obj);
+      });
+      cloned.setCoords();
+    } else {
+      this.canvas.add(cloned);
+    }
+
+    this.canvas.setActiveObject(cloned);
+    this.canvas.requestRenderAll();
+    this.saveHistory();
+    this.updateSelectedProperties();
+    this.updateSelectionBounds();
+    return cloned;
+  }
+
+  public bringForward(): void {
+    const active = this.canvas.getActiveObject();
+    if (!active) return;
+    this.canvas.bringObjectForward(active);
+    this.canvas.requestRenderAll();
+    this.saveHistory();
+  }
+
+  public sendBackward(): void {
+    const active = this.canvas.getActiveObject();
+    if (!active) return;
+    this.canvas.sendObjectBackwards(active);
+    this.canvas.requestRenderAll();
+    this.saveHistory();
+  }
+
+  public bringToFront(): void {
+    const active = this.canvas.getActiveObject();
+    if (!active) return;
+    this.canvas.bringObjectToFront(active);
+    this.canvas.requestRenderAll();
+    this.saveHistory();
+  }
+
+  public sendToBack(): void {
+    const active = this.canvas.getActiveObject();
+    if (!active) return;
+    this.canvas.sendObjectToBack(active);
+    this.canvas.requestRenderAll();
+    this.saveHistory();
+  }
+
   // ---------------------------------------------------------------------------
   // 12. GROUPING, LOCKING & FLIPPING
   // ---------------------------------------------------------------------------
@@ -1532,6 +1659,7 @@ export class CanvasEngine {
       cornerStyle: 'circle',
       borderColor: '#0284C7',
       transparentCorners: false,
+      subTargetCheck: true,
     });
 
     this.canvas.add(group);
@@ -1926,6 +2054,72 @@ export class CanvasEngine {
     active.set({
       selectionStart: start + chars.length,
       selectionEnd: start + chars.length,
+    });
+    active.initDimensions();
+    this.canvas.requestRenderAll();
+    this.saveHistory();
+    this.updateSelectedProperties();
+  }
+
+  public toggleSuperscript(): void {
+    const active = this.canvas.getActiveObject();
+    if (!active || !(active instanceof Textbox)) return;
+    const text = active.text || '';
+    const start = active.selectionStart ?? 0;
+    const end = active.selectionEnd ?? 0;
+    if (start === end) {
+      this.insertTextAtCursor('²');
+      return;
+    }
+    const map: Record<string, string> = {
+      '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+      '+': '⁺', '-': '⁻', '=': '⁼', '(': '⁽', ')': '⁾', 'n': 'ⁿ', 'i': 'ⁱ', 'x': 'ˣ', 'y': 'ʸ',
+      '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9',
+      '⁺': '+', '⁻': '-', '⁼': '=', '⁽': '(', '⁾': ')', 'ⁿ': 'n', 'ⁱ': 'i', 'ˣ': 'x', 'ʸ': 'y',
+    };
+    const selected = text.substring(start, end);
+    const converted = selected.split('').map((c) => map[c] || c).join('');
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+    active.set('text', before + converted + after);
+    active.set({
+      selectionStart: start,
+      selectionEnd: start + converted.length,
+    });
+    active.initDimensions();
+    this.canvas.requestRenderAll();
+    this.saveHistory();
+    this.updateSelectedProperties();
+  }
+
+  public toggleSubscript(): void {
+    const active = this.canvas.getActiveObject();
+    if (!active || !(active instanceof Textbox)) return;
+    const text = active.text || '';
+    const start = active.selectionStart ?? 0;
+    const end = active.selectionEnd ?? 0;
+    if (start === end) {
+      this.insertTextAtCursor('₂');
+      return;
+    }
+    const map: Record<string, string> = {
+      '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+      '+': '₊', '-': '₋', '=': '₌', '(': '₍', ')': '₎', 'a': 'ₐ', 'e': 'ₑ', 'h': 'ₕ', 'i': 'ᵢ', 'j': 'ⱼ',
+      'k': 'ₖ', 'l': 'ₗ', 'm': 'ₘ', 'n': 'ₙ', 'o': 'ₒ', 'p': 'ₚ', 'r': 'ᵣ', 's': 'ₛ', 't': 'ₜ', 'u': 'ᵤ',
+      'v': 'ᵥ', 'x': 'ₓ',
+      '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4', '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9',
+      '₊': '+', '₋': '-', '₌': '=', '₍': '(', '₎': ')', 'ₐ': 'a', 'ₑ': 'e', 'ₕ': 'h', 'ᵢ': 'i', 'ⱼ': 'j',
+      'ₖ': 'k', 'ₗ': 'l', 'ₘ': 'm', 'ₙ': 'n', 'ₒ': 'o', 'ₚ': 'p', 'ᵣ': 'r', 'ₛ': 's', 'ₜ': 't', 'ᵤ': 'u',
+      'ᵥ': 'v', 'ₓ': 'x',
+    };
+    const selected = text.substring(start, end);
+    const converted = selected.split('').map((c) => map[c] || c).join('');
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+    active.set('text', before + converted + after);
+    active.set({
+      selectionStart: start,
+      selectionEnd: start + converted.length,
     });
     active.initDimensions();
     this.canvas.requestRenderAll();

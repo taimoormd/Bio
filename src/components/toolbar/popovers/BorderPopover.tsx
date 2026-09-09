@@ -11,6 +11,8 @@ export interface BorderPopoverProps {
   onSetStroke: (color: string, width?: number) => void;
   onSetStrokeDashStyle: (style: 'solid' | 'dashed' | 'dotted' | 'none') => void;
   onSetCornerRadius?: (radius: number) => void;
+  compact?: boolean;
+  align?: 'left' | 'center' | 'right';
 }
 
 export const BorderPopover: React.FC<BorderPopoverProps> = ({
@@ -22,6 +24,8 @@ export const BorderPopover: React.FC<BorderPopoverProps> = ({
   onSetStroke,
   onSetStrokeDashStyle,
   onSetCornerRadius,
+  compact = false,
+  align = 'left',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -86,7 +90,9 @@ export const BorderPopover: React.FC<BorderPopoverProps> = ({
           ref={buttonRef}
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`h-7 px-2.5 rounded-lg flex items-center space-x-1.5 border text-xs font-medium transition-all select-none ${
+          className={`${
+            compact ? 'h-6 px-2 text-[11px]' : 'h-7 px-2.5 text-xs'
+          } rounded-lg flex items-center space-x-1.5 border font-medium transition-all select-none ${
             isOpen
               ? 'bg-sky-100 text-sky-900 border-sky-300 shadow-xs'
               : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100'
@@ -118,7 +124,13 @@ export const BorderPopover: React.FC<BorderPopoverProps> = ({
       {isOpen && (
         <div
           ref={popoverRef}
-          className="absolute left-0 top-9 z-50 w-72 bg-white/98 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-2xl p-3.5 space-y-3.5 animate-popover select-none"
+          className={`absolute ${
+            align === 'center'
+              ? 'left-1/2 -translate-x-1/2'
+              : align === 'right'
+              ? 'right-0'
+              : 'left-0'
+          } top-full mt-1.5 z-50 w-72 bg-white/98 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-2xl p-3.5 space-y-3.5 animate-popover select-none`}
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
