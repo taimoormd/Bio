@@ -114,7 +114,7 @@ export const PositionPopover: React.FC<PositionPopoverProps> = ({
       {isOpen && (
         <div
           ref={popoverRef}
-          className="absolute left-0 top-9 z-50 w-80 bg-white/98 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-2xl p-3.5 space-y-3.5 animate-popover select-none"
+          className="absolute left-0 top-9 z-50 w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl p-3.5 space-y-3.5 animate-popover select-none"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">

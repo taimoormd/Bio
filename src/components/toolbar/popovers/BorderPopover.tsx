@@ -130,7 +130,7 @@ export const BorderPopover: React.FC<BorderPopoverProps> = ({
               : align === 'right'
               ? 'right-0'
               : 'left-0'
-          } top-full mt-1.5 z-50 w-72 bg-white/98 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-2xl p-3.5 space-y-3.5 animate-popover select-none`}
+          } top-full mt-1.5 z-50 w-72 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl p-3.5 space-y-3.5 animate-popover select-none`}
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">

@@ -182,7 +182,7 @@ export const CompactColorPopover: React.FC<CompactColorPopoverProps> = ({
       {isOpen && (
         <div
           ref={popoverRef}
-          className={`absolute top-9 z-50 w-[270px] bg-white/98 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-2xl p-3 space-y-3 animate-popover select-none ${alignmentClass}`}
+          className={`absolute top-9 z-50 w-[270px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl p-3 space-y-3 animate-popover select-none ${alignmentClass}`}
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">

@@ -313,6 +313,8 @@ export const CanvasViewport = forwardRef<CanvasViewportHandle>((_, ref) => {
         onToggleLock={() => engineRef.current?.toggleLockActiveObjects()}
         onBringForward={() => engineRef.current?.bringForward()}
         onSendBackward={() => engineRef.current?.sendBackward()}
+        onBringToFront={() => engineRef.current?.bringToFront()}
+        onSendToBack={() => engineRef.current?.sendToBack()}
         onDelete={() => engineRef.current?.deleteActiveObjects()}
         onSetFill={(color) => engineRef.current?.setSelectionFill(color)}
         onSetTextBackgroundColor={(color) => engineRef.current?.setTextBackgroundColor(color)}
