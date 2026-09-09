@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Bacterial Capsule (Rod/Pill shaped) -->
+  <rect x="25" y="32" width="50" height="26" rx="13" fill="#16A34A" fill-opacity="0.2" stroke="#16A34A" stroke-width="2.5"/>
+  <!-- Nucleoid DNA loop inside -->
+  <path d="M35 45 C42 41 48 50 56 43 C62 47 65 42 63 48" stroke="#16A34A" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Pili / Fimbriae hair-like projections around capsule -->
+  <line x1="32" y1="32" x2="30" y2="26" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="44" y1="32" x2="44" y2="25" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="56" y1="32" x2="56" y2="25" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="68" y1="32" x2="70" y2="26" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="32" y1="58" x2="30" y2="64" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="44" y1="58" x2="44" y2="65" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="56" y1="58" x2="56" y2="65" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="68" y1="58" x2="70" y2="64" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Long polar flagella -->
+  <path d="M25 45 C15 48 18 60 8 62 C3 63 2 72 2 76" stroke="#16A34A" stroke-width="2" stroke-linecap="round"/>
+</svg>

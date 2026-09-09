@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Outer Membrane (Bean/Capsule shape) -->
+  <path d="M22 36 C22 22 40 18 64 22 C82 25 86 42 84 62 C82 78 66 84 42 82 C24 80 22 55 22 36 Z" fill="#EA580C" fill-opacity="0.2" stroke="#EA580C" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Inner Membrane Cristae Foldings -->
+  <path d="M30 40 C38 40 44 38 48 34" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/>
+  <path d="M76 34 C64 36 56 42 50 42 C44 42 36 48 30 52" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/>
+  <path d="M78 50 C68 50 60 56 52 58 C46 60 38 64 32 68" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/>
+  <path d="M72 68 C62 66 54 70 44 72" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/>
+  <!-- Mitochondrial Matrix Granules -->
+  <circle cx="44" cy="48" r="1.5" fill="#EA580C"/>
+  <circle cx="62" cy="44" r="1.5" fill="#EA580C"/>
+  <circle cx="60" cy="62" r="1.5" fill="#EA580C"/>
+</svg>

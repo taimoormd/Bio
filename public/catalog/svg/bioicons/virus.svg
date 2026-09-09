@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Viral Lipid Envelope -->
+  <circle cx="50" cy="50" r="28" fill="#DC2626" fill-opacity="0.2" stroke="#DC2626" stroke-width="2.5"/>
+  <!-- Viral Capsid / Genome Core -->
+  <circle cx="50" cy="50" r="16" fill="#DC2626" fill-opacity="0.5"/>
+  <path d="M44 46 C48 42 52 48 56 46 C58 52 50 56 46 54" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Surface Spike Glycoproteins (S-proteins) radiating outward -->
+  <!-- 12 Spikes around circle -->
+  <path d="M50 22 L50 12 M47 12 L53 12" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M50 78 L50 88 M47 88 L53 88" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M22 50 L12 50 M12 47 L12 53" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M78 50 L88 50 M88 47 L88 53" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Diagonal Spikes -->
+  <path d="M30 30 L23 23 M21 25 L25 21" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M70 70 L77 77 M75 79 L79 75" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M70 30 L77 23 M75 21 L79 25" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M30 70 L23 77 M21 75 L25 79" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

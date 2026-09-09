@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Outer Nuclear Envelope -->
+  <circle cx="50" cy="50" r="40" fill="#6366F1" fill-opacity="0.15" stroke="#6366F1" stroke-width="2.5" stroke-dasharray="8 3"/>
+  <!-- Inner Nuclear Envelope -->
+  <circle cx="50" cy="50" r="36" stroke="#4F46E5" stroke-width="1.5"/>
+  <!-- Dense Nucleolus -->
+  <circle cx="44" cy="46" r="14" fill="#4F46E5" fill-opacity="0.65"/>
+  <!-- Heterochromatin Condensations -->
+  <path d="M26 36 C32 30 38 32 34 40" stroke="#4338CA" stroke-width="2" stroke-linecap="round"/>
+  <path d="M64 32 C70 38 66 44 72 48" stroke="#4338CA" stroke-width="2" stroke-linecap="round"/>
+  <path d="M40 68 C46 74 54 70 60 74" stroke="#4338CA" stroke-width="2" stroke-linecap="round"/>
+  <path d="M28 58 C34 62 30 70 36 72" stroke="#4338CA" stroke-width="2" stroke-linecap="round"/>
+</svg>

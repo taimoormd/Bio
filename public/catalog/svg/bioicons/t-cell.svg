@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- T-Cell Membrane -->
+  <circle cx="50" cy="50" r="32" fill="#1D4ED8" fill-opacity="0.2" stroke="#1D4ED8" stroke-width="2.5"/>
+  <!-- Nucleus (Large spherical) -->
+  <circle cx="50" cy="50" r="22" fill="#1D4ED8" fill-opacity="0.55"/>
+  <!-- T-Cell Receptors (TCRs) protruding from surface -->
+  <!-- Top TCR -->
+  <path d="M50 18 L50 10 M47 10 L53 10" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/>
+  <!-- Bottom TCR -->
+  <path d="M50 82 L50 90 M47 90 L53 90" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/>
+  <!-- Right TCR -->
+  <path d="M82 50 L90 50 M90 47 L90 53" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/>
+  <!-- Left TCR -->
+  <path d="M18 50 L10 50 M10 47 L10 53" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/>
+  <!-- Diagonal TCRs -->
+  <path d="M72 28 L78 22 M76 20 L80 24" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/>
+  <path d="M28 72 L22 78 M20 76 L24 80" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/>
+</svg>

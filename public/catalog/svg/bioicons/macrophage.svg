@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Macrophage Plasma Membrane with Pseudopodia -->
+  <path d="M50 12 C62 10 74 15 80 26 C86 36 93 42 89 54 C85 66 84 76 72 84 C60 92 48 88 38 86 C28 84 18 90 12 78 C6 66 10 52 14 42 C18 32 16 22 26 16 C34 10 42 13 50 12 Z" fill="#0D9488" fill-opacity="0.25" stroke="#0D9488" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Nucleus -->
+  <path d="M42 35 C52 32 60 38 62 48 C64 56 58 64 48 65 C38 66 32 58 34 48 C35 40 37 36 42 35 Z" fill="#0D9488" fill-opacity="0.6"/>
+  <!-- Phagosomes / Lysosomes -->
+  <circle cx="68" cy="38" r="4" fill="#0D9488" fill-opacity="0.4" stroke="#0D9488" stroke-width="1"/>
+  <circle cx="28" cy="58" r="5" fill="#0D9488" fill-opacity="0.4" stroke="#0D9488" stroke-width="1"/>
+  <circle cx="62" cy="68" r="3.5" fill="#0D9488" fill-opacity="0.4" stroke="#0D9488" stroke-width="1"/>
+</svg>

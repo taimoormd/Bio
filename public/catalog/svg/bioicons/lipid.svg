@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Polar Hydrophilic Phosphate Head -->
+  <circle cx="50" cy="25" r="16" fill="#F59E0B" fill-opacity="0.3" stroke="#F59E0B" stroke-width="2.5"/>
+  <circle cx="50" cy="25" r="6" fill="#F59E0B"/>
+  <!-- Hydrophobic Fatty Acid Tails -->
+  <!-- Left Tail (Saturated - Straight) -->
+  <path d="M44 41 L44 54 L41 64 L45 74 L42 88" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Right Tail (Unsaturated with cis double-bond kink) -->
+  <path d="M56 41 L56 54 L60 64 L68 72 L72 86" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

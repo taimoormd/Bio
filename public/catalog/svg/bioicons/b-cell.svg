@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- B-Cell Membrane -->
+  <circle cx="50" cy="50" r="30" fill="#7C3AED" fill-opacity="0.2" stroke="#7C3AED" stroke-width="2.5"/>
+  <!-- Nucleus -->
+  <circle cx="50" cy="50" r="20" fill="#7C3AED" fill-opacity="0.5"/>
+  <!-- Y-shaped B-Cell Receptors (BCR) on membrane -->
+  <path d="M50 20 L50 14 M50 14 L46 8 M50 14 L54 8" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M50 80 L50 86 M50 86 L46 92 M50 86 L54 92" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M20 50 L14 50 M14 50 L8 46 M14 50 L8 54" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M80 50 L86 50 M86 50 L92 46 M86 50 L92 54" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+</svg>
